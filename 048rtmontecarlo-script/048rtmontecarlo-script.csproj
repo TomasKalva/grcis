@@ -264,6 +264,12 @@
     <Compile Include="..\common\WorkloadDistribution.cs">
       <Link>WorkloadDistribution.cs</Link>
     </Compile>
+    <None Include="..\data\rtscenes\VolumeObjectScene.cs">
+      <Link>VolumeObjectScene.cs</Link>
+    </None>
+    <Compile Include="..\newmodules\TomasKalva-VolumeRayCasting\Noise.cs">
+      <Link>Noise.cs</Link>
+    </Compile>
     <Compile Include="AdditionalViewsForm.cs">
       <SubType>Form</SubType>
     </Compile>
