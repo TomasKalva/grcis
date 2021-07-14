@@ -2,6 +2,7 @@
 // Rendering params.
 
 using _048rtmontecarlo;
+using TomasKalva;
 
 Debug.Assert(scene != null);
 Debug.Assert(context != null);
@@ -76,49 +77,19 @@ if (p.TryGetValue("mat", out mat))
 
 
 
-var noise = new PerlinNoise3d();
-
-// Function calculating color of cube bounded volume objects
-RecursionFunction del = (Intersection i, Vector3d dir, double importance, out RayRecursion rr) =>
-{
-  double direct = 1.0 - i.TextureCoord.X;
-  direct = Math.Pow(direct * direct, 6.0);
-
-  double colorVal = 0;
-  var localP0 = i.CoordLocal;
-  var localP1 = Vector3d.TransformVector(dir, i.WorldToLocal).Normalized();
-
-  // iterate over the ray
-  for (double t = 0; t < 1.8; t += 0.01)
-  {
-    // calculate position in the local cube space
-    var p = localP0 + t * localP1;
-    // ignore positions out of bounds
-    if ((p.X >= 1 || p.X < 0) &&
-        (p.Y >= 1 || p.Y < 0) &&
-        (p.Z >= 1 || p.Z < 0))
-      continue;
-
-    // sum color values in ball in middle of the cube
-    var toCenter = new Vector3d(.5) - p;
-    if (toCenter.X * toCenter.X + toCenter.Z * toCenter.Z + toCenter.Y * toCenter.Y < .5 * .5)
-      colorVal += Math.Max(0, noise.GetValue(10 * p.X, 10 * p.Y, 10 * p.Z) / 20);
-  }
-
-  rr = new RayRecursion(
-    new double[3] { colorVal, colorVal, colorVal },
-    new RayRecursion.RayContribution(i, dir, importance));
-
-  return 144L;
-};
-
 // Cubes.
 ISolid c;
 
+var noise = new PerlinNoise3d();
+Func<double, double, double, double[]> color = (double x, double y, double z) =>
+{
+  var c = noise.GetValue(10 * x, 10 * y, 10 * z) / 100;
+  return new double[3] { c, c, c };
+};
 // Volume object
-c = new Cube();
+c = new VolumeCube(color);
 root.InsertChild(c, Matrix4d.Scale(4) * Matrix4d.RotateY(0.6) * Matrix4d.CreateTranslation(-3.5, -1.9, 0.0));
+
+c = new Cube();
+root.InsertChild(c, Matrix4d.RotateY(0.6) * Matrix4d.CreateTranslation(-3.6, -0.8, 0.0));
 c.SetAttribute(PropertyName.MATERIAL, pm);
-c.SetAttribute(PropertyName.RECURSION, del);
-c.SetAttribute(PropertyName.NO_SHADOW, true);
-c.SetAttribute(PropertyName.TEXTURE, new NoiseTexture());

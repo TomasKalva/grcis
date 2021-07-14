@@ -3,13 +3,14 @@ using OpenTK;
 using Rendering;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Utilities;
 using static MathSupport.RandomJames;
 
-namespace _048rtmontecarlo
+namespace TomasKalva
 {
   using static MyMath;
 
@@ -63,6 +64,20 @@ namespace _048rtmontecarlo
     public static double Lerp (double x, double y, double a)
     {
       return x * (1.0 - a) + y * a;
+    }
+
+    /// <summary>
+    /// Makes all components of color at least max. Returns color.
+    /// </summary>
+    /// <param name="color">Color bands</param>
+    public static double[] Max (double[] color, double max)
+    {
+      Debug.Assert(color != null);
+
+      int bands = color.Length;
+      for (int i = 0; i < bands; i++)
+        color[i] = Math.Max(color[i], max);
+      return color;
     }
   }
 
