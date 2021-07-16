@@ -14,20 +14,24 @@ namespace TomasKalva
 {
   using static MyMath;
 
-  interface IFunction2d<T>
+  public abstract class Function2d<T>
   {
-    T GetValue (double x, double y);
+    public T this[Vector2d v] { get => this[v.X, v.Y]; }
+    public abstract T this[double x, double y] { get; }
   }
 
-  interface IFunction3d<T>
+  public abstract class Function3d<T>
   {
-    T GetValue (double x, double y, double z);
+    public T this[Vector3d v] { get => this[v.X, v.Y, v.Z]; }
+    public abstract T this[double x, double y, double z] { get; }
   }
 
-  public class WhiteNoise : IFunction3d<double>
+  public class WhiteNoise : Function3d<double>
   {
     double[] RandomTab;
     int[] Indx, Indy, Indz;
+
+    public override double this[double x, double y, double z] => GetValue(x, y, z);
 
     public WhiteNoise()
     {
@@ -79,11 +83,42 @@ namespace TomasKalva
         color[i] = Math.Max(color[i], max);
       return color;
     }
+
+    /// <summary>
+    /// Makes all components of color at least max. Returns color.
+    /// </summary>
+    /// <param name="color">Color bands</param>
+    public static Vector3d Max (Vector3d color, double max)
+    {
+      return new Vector3d(Math.Max(color.X, max), Math.Max(color.Y, max), Math.Max(color.Z, max));
+    }
+
+    public static double Smoothstep(double from, double to, double t)
+    {
+      if (t < from)
+        return 0;
+      if (t > to)
+        return 1;
+      t = (t - from) / (to - from);
+      return t * t * (2 - 3 * t);
+    }
+
+    public static double InZeroOneBounds (Vector3d p)
+    {
+      if ((p.X >= 1 || p.X < 0) ||
+          (p.Y >= 1 || p.Y < 0) ||
+          (p.Z >= 1 || p.Z < 0))
+        return 0;
+      else
+        return 1;
+    }
   }
 
-  public class PerlinNoise2d : IFunction2d<double>
+  public class PerlinNoise2d : Function2d<double>
   {
     WhiteNoise whiteNoise;
+
+    public override double this[double x, double y] => GetValue(x, y);
 
     public PerlinNoise2d ()
     {
@@ -116,9 +151,11 @@ namespace TomasKalva
     }
   }
 
-  public class PerlinNoise3d : IFunction3d<double>
+  public class PerlinNoise3d : Function3d<double>
   {
     WhiteNoise whiteNoise;
+
+    public override double this[double x, double y, double z] => GetValue(x, y, z);
 
     public PerlinNoise3d ()
     {
@@ -165,7 +202,7 @@ namespace TomasKalva
   [Serializable]
   public class NoiseTexture : ITexture
   {
-    private IFunction3d<double> noise;
+    private Function3d<double> noise;
 
     public NoiseTexture ()
     {
@@ -185,7 +222,7 @@ namespace TomasKalva
       double w = inter.CoordWorld.Z;
 
 
-      double val = noise.GetValue(u, v, w) / 2.0 + .5;
+      double val = noise[inter.CoordWorld] / 2.0 + .5;
 
       long ui = (long)Math.Floor(u);
       long vi = (long)Math.Floor(v);
