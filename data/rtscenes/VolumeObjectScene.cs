@@ -1,7 +1,6 @@
 //////////////////////////////////////////////////
 // Rendering params.
 
-using _048rtmontecarlo;
 using TomasKalva;
 
 Debug.Assert(scene != null);
@@ -30,7 +29,7 @@ context[PropertyName.CTX_TOOLTIP] = "n=<double> (index of refraction)\rmat={mirr
 //////////////////////////////////////////////////
 // CSG scene.
 
-CSGInnerNode root = new CSGInnerNode(SetOperation.Union);
+AnimatedCSGInnerNode root = new AnimatedCSGInnerNode(SetOperation.Union);
 root.SetAttribute(PropertyName.REFLECTANCE_MODEL, new PhongModel());
 root.SetAttribute(PropertyName.MATERIAL, new PhongMaterial(new double[] {1.0, 0.6, 0.1}, 0.1, 0.8, 0.2, 16));
 scene.Intersectable = root;
@@ -80,41 +79,21 @@ if (p.TryGetValue("mat", out mat))
 // Cubes.
 ISolid c;
 
-var noise = new PerlinNoise3d();
-Func<Vector3d, double, double, double> parabolaShape = (Vector3d v, double r, double top) =>
-{
-  Vector3d origin = new Vector3d(0.5, 0, 0.5);
-  Vector3d relV = new Vector3d(v.X, 1 - v.Y, v.Z) - origin;
-  var pY = 1 - top * (relV.X * relV.X + relV.Z * relV.Z) / (r * r);
-  var dy = Math.Max(0, pY - v.Y);
-  return v.Y < pY ? ( 1 - Math.Max(0, v.Y) / pY) /** MyMath.InZeroOneBounds(v)*/: 0;//Math.Max(dy * dy, 0);
-};
+Func<Vector3d, double> fadeBottom = VolumeCube.FadeBottom(0.3);
+//Func<Vector3d, double> fireShape = VolumeCube.ParaboloidShape(0.3, 1);
+Func<Vector3d, double> fireShape = VolumeCube.BallShape(Vector3d.One * 0.5, Vector3d.One, 0.5);
 
-Func<Vector3d, double> ballShape = (Vector3d v) =>
-{
-  Vector3d scale = new Vector3d(1, 1, 1);
-  Vector3d origin = new Vector3d(0.5, 0.5, 0.5);
-  Vector3d relV = Vector3d.Divide(v - origin, scale);
-  var c = relV.X * relV.X + relV.Y * relV.Y + relV.Z * relV.Z;
-  return c < 0.25 ? 1 : 0;
-};
+var fireLight = new Vector3d(0.916, 0.930, 0.122);
+var fireDark = new Vector3d(0.920, 0.0, 0.0);
+Func<double, Vector3d> fireColor = intensity => Vector3d.Lerp(fireDark, fireLight, intensity);
 
-Func<Vector3d, Vector3d> color = (Vector3d v) =>
-{
-  Vector3d scaledV = v * new Vector3d(15, 1, 15);
-  Vector3d displ = new Vector3d(noise[v * 3], noise[v + Vector3d.UnitX * 10] , noise[v * 3 + Vector3d.UnitX * 20]);
-  var c = noise[scaledV + 3 * displ] * parabolaShape(v + 0.21532446 * displ, 0.5, 1);
+Func<Vector3d, double, Vector3d> fire = VolumeCube.Fire(v => fireShape(v) * fadeBottom(v), fireColor);
 
-  var fireLight = new Vector3d(0.916, 0.930, 0.122);
-  var fireDark = new Vector3d(0.920, 0.0, 0.0);
-
-  return 70 * c * Vector3d.Lerp(fireDark, fireLight, c) * (1 - v.Y) * (1 - v.Y) * (v.Y < 0.3 ? v.Y / 0.3 : 1);
-};
 
 // Volume object
-c = new VolumeCube(color);
+c = new VolumeCube(fire);
 root.InsertChild(c, Matrix4d.Scale(4) * Matrix4d.RotateY(0.6) * Matrix4d.CreateTranslation(-3.5, -1.9, 0.0));
 
 c = new Cube();
-root.InsertChild(c, /* Matrix4d.RotateY(0.6) **/ Matrix4d.CreateTranslation(-3.6, -0.8, 0.0));
+root.InsertChild(c, Matrix4d.CreateTranslation(-3.6, -0.8, 0.0));
 c.SetAttribute(PropertyName.MATERIAL, pm);

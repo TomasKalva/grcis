@@ -183,6 +183,12 @@
     <Compile Include="..\common\WorkloadDistributionDummy.cs">
       <Link>WorkloadDistributionDummy.cs</Link>
     </Compile>
+    <Compile Include="..\newmodules\TomasKalva-VolumeRayCasting\Noise.cs">
+      <Link>Noise.cs</Link>
+    </Compile>
+    <Compile Include="..\newmodules\TomasKalva-VolumeRayCasting\VolumeCube.cs">
+      <Link>VolumeCube.cs</Link>
+    </Compile>
     <Compile Include="Form1.cs">
       <SubType>Form</SubType>
     </Compile>
