@@ -34,14 +34,18 @@ namespace TomasKalva
         var colorVec = Vector3d.Zero;
         var localP0 = i.CoordLocal;
         var localP1 = Vector3d.TransformVector(dir, i.WorldToLocal).Normalized();
+        
+        // calculate intersection where the ray leaves the solid
+        var outIntersection = ExitIntersection(localP0, localP1);
+        outIntersection.Complete();
 
         // iterate over the ray
-        for (double t = 0; t < 1.8; t += step)
+        for (double t = 0; t <= outIntersection.T; t += step)
         {
           // calculate position in the local cube space
           var p = localP0 + t * localP1;
           // jittering
-          p += 0.001 * random.GetValue(p.X, p.Y, p.Z) * localP1;
+          p += 0.001 * random[p.X, p.Y, p.Z] * localP1;
           // ignore positions out of bounds
           if ((p.X >= 1 || p.X < 0) ||
               (p.Y >= 1 || p.Y < 0) ||
@@ -52,9 +56,6 @@ namespace TomasKalva
           colorVec += MyMath.Max(color(p, Time), 0) * step;
         }
 
-        // calculate intersection where the ray leaves the solid
-        var outIntersection = OutIntersection(localP0, localP1);
-        outIntersection.Complete();
 
         double[] colorVal = new double[3] { colorVec.X, colorVec.Y, colorVec.Z };
         rr = new RayRecursion(
@@ -82,7 +83,10 @@ namespace TomasKalva
       };
     }
 
-    private Intersection OutIntersection (Vector3d p0, Vector3d p1)
+    /// <summary>
+    /// Returns intersection, where the ray with starting point p0 and direction p1 leaves the solid.
+    /// </summary>
+    private Intersection ExitIntersection (Vector3d p0, Vector3d p1)
     {
       var intersections = Intersect(p0, p1);
       return intersections.Count == 0 ? null : intersections.Last.Value;
@@ -128,37 +132,84 @@ namespace TomasKalva
       };
     }
 
-    public static Func<Vector3d, double, Vector3d> Fire (Func<Vector3d, double> shape, Func<Vector3d, double> textureNoise, Func<Vector3d, double> displNoise, Func<double, Vector3d> color, double speed = 1.0)
+    public static Func<Vector4d, Vector3d> Displacement(Func<Vector4d, double> noise)
     {
-      var noise = new PerlinNoise3d();
-      var turbulence = new Turbulence3d(noise, 4);
+      return v =>
+      {
+        return new Vector3d(noise(v), noise(v + Vector4d.UnitX * 10) , noise(v + Vector4d.UnitX * 20));
+      };
+    }
+
+    public static Func<Vector3d, Vector3d> Displacement (Func<Vector3d, double> noise)
+    {
+      return v =>
+      {
+        return new Vector3d(noise(v), noise(v + Vector3d.UnitX * 10), noise(v + Vector3d.UnitX * 20));
+      };
+    }
+
+    public static Func<Vector3d, double, Vector3d> Fire (Func<Vector3d, double> shape, Func<Vector3d, double> textureNoise, Func<Vector3d, double> displNoise, Func<double, Vector3d> color, double speed = 1.0, double intensityMult = 1.0)
+    {
       return (Vector3d v, double t) =>
       {
         Vector3d scaledV = v * new Vector3d(15, 1, 15);
         var offset =  - speed * 4 * t * Vector3d.UnitY;
         Vector3d displ = new Vector3d(displNoise(v * 3 + offset), displNoise(v + Vector3d.UnitX * 10 + offset) , displNoise(v * 3 + Vector3d.UnitX * 20 + offset));
-        var intensity = textureNoise(scaledV + offset + displ) * shape(v + 0.21532446 * displ) * ( v.Y < 0.1 ? 0 : 1);
+        var intensity = intensityMult * textureNoise(scaledV + offset + displ) * shape(v + 0.21532446 * displ) * ( v.Y < 0.1 ? 0 : 1);
 
-        return 70 * intensity * color(intensity) ;
+        return 200 * intensity * color(intensity);
       };
     }
 
-    public static Func<Vector3d, double> Noise ()
+    public static Func<Vector3d, double> Noise3d ()
     {
       var noise = new PerlinNoise3d();
       return v =>
       {
-        return noise[v];
+        return noise[v.X, v.Y, v.Z];
       };
     }
 
-    public static Func<Vector3d, double> Turbulence (int octaves, double lacunarity = 2.0, double gain = 0.5)
+    public static Func<Vector4d, double> Noise4d ()
     {
-      var noise = new PerlinNoise3d();
-      var turbulence = new Turbulence3d(noise, octaves, lacunarity, gain);
+      var noise = new PerlinNoise4d();
       return v =>
       {
-        return turbulence[v];
+        return noise[v.X, v.Y, v.Z, v.W];
+      };
+    }
+
+    public static Func<Vector3d, double> Turbulence (Func<Vector3d, double> noise, int octaves, double lacunarity = 2.0, double gain = 0.5)
+    {
+      return v =>
+      {
+        double total = 0;
+        double a = 1.0;
+        double f = 1.0;
+        for (int i = 0; i < octaves; i++)
+        {
+          total += a * noise(f * v);
+          a *= gain;
+          f *= lacunarity;
+        }
+        return total;
+      };
+    }
+
+    public static Func<Vector4d, double> Turbulence (Func<Vector4d, double> noise, int octaves, double lacunarity = 2.0, double gain = 0.5)
+    {
+      return v =>
+      {
+        double total = 0;
+        double a = 1.0;
+        double f = 1.0;
+        for (int i = 0; i < octaves; i++)
+        {
+          total += a * noise(f * v);
+          a *= gain;
+          f *= lacunarity;
+        }
+        return total;
       };
     }
   }
