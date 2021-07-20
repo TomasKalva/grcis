@@ -38,7 +38,7 @@ scene.Intersectable = root;
 scene.BackgroundColor = new double[] {0.0, 0.0, 0.0};
 
 // Camera.
-scene.Camera = new StaticCamera(new Vector3d(0.7, 3.0, -10.0),
+scene.Camera = new StaticCamera(new Vector3d(0.0, 3.0, -15.0),
                                 new Vector3d(0.0, -0.3, 1.0),
                                 50.0);
 
@@ -79,29 +79,46 @@ if (p.TryGetValue("mat", out mat))
 // Cubes.
 ISolid c;
 
-Func<Vector3d, double> fadeBottom = VolumeCube.FadeBottom(0.3);
-Func<Vector3d, double> fireShape = VolumeCube.ParaboloidShape(0.6, 1.0);
-//Func<Vector3d, double> fireShape = VolumeCube.BallShape(Vector3d.One * 0.5, Vector3d.One, 0.5);
+Func<Vector3d, double> fadeBottom = VolumeCube.FadeBottom(0.2);
+Func<Vector3d, double> fireShape = VolumeCube.ParaboloidFireShape(0.5, 1.0);
+//Func<Vector3d, double> fireShape = VolumeCube.BallShape(Vector3d.One * 0.5, 0.3 * Vector3d.One);
 
-var fireLight = new Vector3d(0.916, 0.930, 0.122);
-var fireDark = new Vector3d(0.920, 0.0, 0.0);
-Func<double, Vector3d> fireColor = intensity => Vector3d.Lerp(fireDark, fireLight, intensity);
+Func<double, Vector3d> fireColorYellow = intensity => Vector3d.Lerp(new Vector3d(0.920, 0.0, 0.0), new Vector3d(0.916, 0.930, 0.122), intensity);
 
-Func<Vector3d, double, Vector3d> fire = VolumeCube.Fire(v => fireShape(v) * fadeBottom(v) * fadeBottom(v), fireColor, 1.0025);
+Func<double, Vector3d> fireColorBlue = intensity => Vector3d.Lerp(new Vector3d(0.339, 0.717, 0.925), new Vector3d(1.000, 1.000, 1.000), intensity);
 
-var noise = new PerlinNoise3d();
-var turbulence = new Turbulence3d(noise, 4);
+var noise = VolumeCube.Noise();
+var turbulence = VolumeCube.Turbulence(4);
+
+Func<Vector3d, double, Vector3d> smoothFire = VolumeCube.Fire(fireShape, noise, noise, fireColorYellow, 1.0);
+Func<Vector3d, double, Vector3d> fire = VolumeCube.Fire(fireShape, turbulence, noise, fireColorYellow, 1.0);
+Func<Vector3d, double, Vector3d> chaoticFire = VolumeCube.Fire(fireShape, turbulence, turbulence, fireColorYellow, 1.0);
+
+Func<Vector3d, double, Vector3d> smoothFireBlue = VolumeCube.Fire(fireShape, noise, noise, fireColorBlue, 1.0);
+Func<Vector3d, double, Vector3d> fireBlue = VolumeCube.Fire(fireShape, turbulence, noise, fireColorBlue, 1.0);
+Func<Vector3d, double, Vector3d> chaoticFireBlue = VolumeCube.Fire(fireShape, turbulence, turbulence, fireColorBlue, 1.0);
 
 Func<Vector3d, double, Vector3d> cloud = (v, t) =>
 {
-  var turb = turbulence[v];
+  var turb = turbulence(v);
   return turb * Vector3d.One;
 };
 
 // Volume object
-c = new VolumeCube(fire);
-root.InsertChild(c, Matrix4d.Scale(4) * Matrix4d.RotateY(0.6) * Matrix4d.CreateTranslation(-3.5, -1.9, 0.0));
+c = new VolumeCube(smoothFire);
+root.InsertChild(c, Matrix4d.Scale(4) * Matrix4d.RotateY(0.6) * Matrix4d.CreateTranslation(-8.0, -1.9, 0.0));
 
-c = new Cube();
-root.InsertChild(c, Matrix4d.CreateTranslation(-3.6, -0.8, 0.0));
-c.SetAttribute(PropertyName.MATERIAL, pm);
+c = new VolumeCube(fire);
+root.InsertChild(c, Matrix4d.Scale(4) * Matrix4d.RotateY(0.6) * Matrix4d.CreateTranslation(-4.0, -1.9, 0.0));
+
+c = new VolumeCube(chaoticFire);
+root.InsertChild(c, Matrix4d.Scale(4) * Matrix4d.RotateY(0.6) * Matrix4d.CreateTranslation(0.0, -1.9, 0.0));
+
+c = new VolumeCube(smoothFireBlue);
+root.InsertChild(c, Matrix4d.Scale(4) * Matrix4d.RotateY(0.6) * Matrix4d.CreateTranslation(-8.0, -5.0, 0.0));
+
+c = new VolumeCube(fireBlue);
+root.InsertChild(c, Matrix4d.Scale(4) * Matrix4d.RotateY(0.6) * Matrix4d.CreateTranslation(-4.0, -5.0, 0.0));
+
+c = new VolumeCube(chaoticFireBlue);
+root.InsertChild(c, Matrix4d.Scale(4) * Matrix4d.RotateY(0.6) * Matrix4d.CreateTranslation(0.0, -5.0, 0.0));

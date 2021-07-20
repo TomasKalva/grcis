@@ -100,13 +100,23 @@ namespace TomasKalva
       };
     }
 
-    public static Func<Vector3d, double> BallShape (Vector3d origin, Vector3d scale, double r)
+    public static Func<Vector3d, double> ParaboloidFireShape (double r, double top = 1.0, double steepness = 1.0)
+    {
+      Func<Vector3d, double> paraboloid = ParaboloidShape(r, top, steepness);
+      Func<Vector3d, double> fadeBottom = FadeBottom(0.2);
+      return v =>
+      {
+        return paraboloid(v) * fadeBottom(v) * fadeBottom(v) * (1 - v.Y) * (1 - v.Y);
+      };
+    }
+
+    public static Func<Vector3d, double> BallShape (Vector3d origin, Vector3d scale)
     {
       return v =>
       {
         Vector3d relV = Vector3d.Divide(v - origin, scale);
         var c = relV.X * relV.X + relV.Y * relV.Y + relV.Z * relV.Z;
-        return c < r * r ? 1 : 0;
+        return Math.Max(0.0, 1.0 - c);
       };
     }
 
@@ -118,17 +128,37 @@ namespace TomasKalva
       };
     }
 
-    public static Func<Vector3d, double, Vector3d> Fire (Func<Vector3d, double> shape, Func<double, Vector3d> color, double speed = 1.0)
+    public static Func<Vector3d, double, Vector3d> Fire (Func<Vector3d, double> shape, Func<Vector3d, double> textureNoise, Func<Vector3d, double> displNoise, Func<double, Vector3d> color, double speed = 1.0)
     {
       var noise = new PerlinNoise3d();
+      var turbulence = new Turbulence3d(noise, 4);
       return (Vector3d v, double t) =>
       {
         Vector3d scaledV = v * new Vector3d(15, 1, 15);
         var offset =  - speed * 4 * t * Vector3d.UnitY;
-        Vector3d displ = new Vector3d(noise[v * 3 + offset], noise[v + Vector3d.UnitX * 10 + offset] , noise[v * 3 + Vector3d.UnitX * 20 + offset]);
-        var intensity = noise[scaledV + offset + displ] * shape(v + 0.21532446 * displ) * ( v.Y < 0.1 ? 0 : 1);
+        Vector3d displ = new Vector3d(displNoise(v * 3 + offset), displNoise(v + Vector3d.UnitX * 10 + offset) , displNoise(v * 3 + Vector3d.UnitX * 20 + offset));
+        var intensity = textureNoise(scaledV + offset + displ) * shape(v + 0.21532446 * displ) * ( v.Y < 0.1 ? 0 : 1);
 
-        return 70 * intensity * color(intensity) * (1 - v.Y) * (1 - v.Y);
+        return 70 * intensity * color(intensity) ;
+      };
+    }
+
+    public static Func<Vector3d, double> Noise ()
+    {
+      var noise = new PerlinNoise3d();
+      return v =>
+      {
+        return noise[v];
+      };
+    }
+
+    public static Func<Vector3d, double> Turbulence (int octaves, double lacunarity = 2.0, double gain = 0.5)
+    {
+      var noise = new PerlinNoise3d();
+      var turbulence = new Turbulence3d(noise, octaves, lacunarity, gain);
+      return v =>
+      {
+        return turbulence[v];
       };
     }
   }
