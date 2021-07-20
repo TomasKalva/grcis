@@ -80,15 +80,23 @@ if (p.TryGetValue("mat", out mat))
 ISolid c;
 
 Func<Vector3d, double> fadeBottom = VolumeCube.FadeBottom(0.3);
-//Func<Vector3d, double> fireShape = VolumeCube.ParaboloidShape(0.3, 1);
-Func<Vector3d, double> fireShape = VolumeCube.BallShape(Vector3d.One * 0.5, Vector3d.One, 0.5);
+Func<Vector3d, double> fireShape = VolumeCube.ParaboloidShape(0.6, 1.0);
+//Func<Vector3d, double> fireShape = VolumeCube.BallShape(Vector3d.One * 0.5, Vector3d.One, 0.5);
 
 var fireLight = new Vector3d(0.916, 0.930, 0.122);
 var fireDark = new Vector3d(0.920, 0.0, 0.0);
 Func<double, Vector3d> fireColor = intensity => Vector3d.Lerp(fireDark, fireLight, intensity);
 
-Func<Vector3d, double, Vector3d> fire = VolumeCube.Fire(v => fireShape(v) * fadeBottom(v), fireColor);
+Func<Vector3d, double, Vector3d> fire = VolumeCube.Fire(v => fireShape(v) * fadeBottom(v) * fadeBottom(v), fireColor, 1.0025);
 
+var noise = new PerlinNoise3d();
+var turbulence = new Turbulence3d(noise, 4);
+
+Func<Vector3d, double, Vector3d> cloud = (v, t) =>
+{
+  var turb = turbulence[v];
+  return turb * Vector3d.One;
+};
 
 // Volume object
 c = new VolumeCube(fire);

@@ -88,15 +88,15 @@ namespace TomasKalva
       return intersections.Count == 0 ? null : intersections.Last.Value;
     }
 
-    public static Func<Vector3d, double> ParaboloidShape (double r, double top) 
+    public static Func<Vector3d, double> ParaboloidShape (double r, double top = 1.0, double steepness = 1.0) 
     {
       return v =>
       {
         Vector3d origin = new Vector3d(0.5, 0, 0.5);
         Vector3d relV = new Vector3d(v.X, 1 - v.Y, v.Z) - origin;
-        var pY = 1 - top * (relV.X * relV.X + relV.Z * relV.Z) / (r * r);
+        var pY = top - steepness * (relV.X * relV.X + relV.Z * relV.Z) / (r * r);
         var dy = Math.Max(0, pY - v.Y);
-        return v.Y < pY ? (1 - Math.Max(0, v.Y) / pY) : 0;
+        return v.Y < pY ? Math.Min(1.0, 1.0 - v.Y / pY) : 0;
       };
     }
 
@@ -118,16 +118,17 @@ namespace TomasKalva
       };
     }
 
-    public static Func<Vector3d, double, Vector3d> Fire (Func<Vector3d, double> shape, Func<double, Vector3d> color)
+    public static Func<Vector3d, double, Vector3d> Fire (Func<Vector3d, double> shape, Func<double, Vector3d> color, double speed = 1.0)
     {
       var noise = new PerlinNoise3d();
       return (Vector3d v, double t) =>
       {
         Vector3d scaledV = v * new Vector3d(15, 1, 15);
-        Vector3d displ = new Vector3d(noise[v * 3 - t * Vector3d.UnitY], noise[v + Vector3d.UnitX * 10 - t * Vector3d.UnitY] , noise[v * 3 + Vector3d.UnitX * 20 - t * Vector3d.UnitY]);
-        var intensity = noise[scaledV - 4 * t * Vector3d.UnitY + 3 * displ] * shape(v + 0.21532446 * displ);
+        var offset =  - speed * 4 * t * Vector3d.UnitY;
+        Vector3d displ = new Vector3d(noise[v * 3 + offset], noise[v + Vector3d.UnitX * 10 + offset] , noise[v * 3 + Vector3d.UnitX * 20 + offset]);
+        var intensity = noise[scaledV + offset + displ] * shape(v + 0.21532446 * displ) * ( v.Y < 0.1 ? 0 : 1);
 
-        return 70 * intensity * color(intensity) /** (1 - v.Y) * (1 - v.Y)*/;
+        return 70 * intensity * color(intensity) * (1 - v.Y) * (1 - v.Y);
       };
     }
   }

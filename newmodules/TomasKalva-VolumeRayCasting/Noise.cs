@@ -196,6 +196,38 @@ namespace TomasKalva
     }
   }
 
+  public class Turbulence3d : Function3d<double>
+  {
+    Function3d<double> noise;
+    int octaves;
+    double lacunarity;
+    double gain;
+
+    public override double this[double x, double y, double z] => GetValue(x, y, z);
+
+    public Turbulence3d (Function3d<double> noise, int octaves, double lacunarity = 2.0, double gain = 0.5)
+    {
+      this.noise = noise;
+      this.octaves = octaves;
+      this.lacunarity = lacunarity;
+      this.gain = gain;
+    }
+
+    public double GetValue (double x, double y, double z)
+    {
+      double total = 0;
+      double a = 1.0;
+      double f = 1.0;
+      for(int i = 0; i < octaves; i++)
+      {
+        total += a * noise[f * x, f * y, f * z];
+        a *= gain;
+        f *= lacunarity;
+      }
+      return total;
+    }
+  }
+
   /// <summary>
   /// Simple texture able to modulate surface color.
   /// </summary>
