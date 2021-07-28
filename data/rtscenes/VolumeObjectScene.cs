@@ -35,8 +35,7 @@ Dictionary<string, string> p = Util.ParseKeyValueList(param);
 // Cubes.
 ISolid c;
 
-Func<Vector3d, double> fadeBottom = VolumeCube.FadeBottom(0.2);
-Func<Vector3d, double> fireShape = VolumeCube.ParaboloidFireShape(0.5, 1.0);
+Func<Vector3d, double> fireShape = VolumeCube.ParaboloidFireShape(new Vector3d(0.5, 1.0, 0.5), new Vector3d(0.5, -1.0, 0.5));
 Func<Vector3d, double> ellipsoid = VolumeCube.BallShape(Vector3d.One * 0.5, 0.25 * Vector3d.One);
 
 Func<double, Vector3d> fireColorYellow = intensity => Vector3d.Lerp(new Vector3d(0.920, 0.0, 0.0), new Vector3d(0.916, 0.930, 0.122), intensity);
@@ -71,6 +70,7 @@ Func<Vector3d, double, Vector3d> cloud = (v, t) =>
 c = new VolumeCube(smoothFire);
 root.InsertChild(c, Matrix4d.Scale(4) * Matrix4d.RotateY(0.6) * Matrix4d.CreateTranslation(-8.0, -0.9, 0.0));
 
+
 c = new VolumeCube(fire);
 root.InsertChild(c, Matrix4d.Scale(4) * Matrix4d.RotateY(0.6) * Matrix4d.CreateTranslation(-4.0, -0.9, 0.0));
 
@@ -85,6 +85,7 @@ root.InsertChild(c, Matrix4d.Scale(4) * Matrix4d.RotateY(0.6) * Matrix4d.CreateT
 
 c = new VolumeCube(chaoticFireBlue);
 root.InsertChild(c, Matrix4d.Scale(4) * Matrix4d.RotateY(0.6) * Matrix4d.CreateTranslation(0.0, -6.0, 0.0));
+
 
 
 //c = new VolumeCube(cloud);
