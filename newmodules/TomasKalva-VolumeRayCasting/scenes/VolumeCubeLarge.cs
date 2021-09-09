@@ -22,7 +22,7 @@ var lookAt = new Vector3d(12.5, 2.0, 7.5);
 var pos = new Vector3d(-15.0, 8.0, 1.0);
 scene.Camera = new StaticCamera(pos,
                                 lookAt - pos,
-                                50.0);
+                                40.0);
 
 // Light sources.
 scene.Sources = new System.Collections.Generic.LinkedList<ILightSource>();
@@ -57,9 +57,9 @@ Func<double, Vector3d> fireColorYellow = intensity => Vector3d.Lerp(new Vector3d
 Func<double, Vector3d> fireColorBlue = intensity => Vector3d.Lerp(new Vector3d(0.339, 0.717, 0.925), new Vector3d(1.000, 1.000, 1.000), intensity);
 
 // Fires
-AnimatedColor smoothFire = VolumeCube.Fire(fireShape, noise, noise, fireColorYellow, 1.0, 10.0);
-AnimatedColor fire = VolumeCube.Fire(smallFireShape, turbulence, noise, fireColorYellow, 1.0, 10.0);
-AnimatedColor chaoticFire = VolumeCube.Fire(fireShape, turbulence, turbulence, fireColorYellow, 1.0, 10.0);
+AnimatedColor smoothFire = VolumeCube.Fire(fireShape, noise, noise, fireColorYellow, 1.0, 5.0);
+AnimatedColor fire = VolumeCube.Fire(smallFireShape, turbulence, noise, fireColorYellow, 1.0, 5.0);
+AnimatedColor chaoticFire = VolumeCube.Fire(fireShape, turbulence, turbulence, fireColorYellow, 1.0, 5.0);
 
 AnimatedColor smoothFireBlue = VolumeCube.Fire(smallFireShape, noise, noise, fireColorBlue, 1.0);
 AnimatedColor fireBlue = VolumeCube.Fire(fireShape, turbulence, noise, fireColorBlue, 1.0);

@@ -139,11 +139,14 @@ namespace TomasKalva
     public static Intensity ParaboloidFireShape (Vector3d vertex, Vector3d scale)
     {
       Intensity paraboloid = ParaboloidShape(vertex, scale);
-      Intensity fadeBottom = (v) => v.Y < 0.2 ? v.Y / 0.2 : 1;
+      Intensity fadeBottom = (v) => v.Y < 0.2 ? Math.Max(v.Y, 0d) / 0.2 : 1;
       Intensity fadeTop = (v) => (1 - v.Y);
       return v =>
       {
-        return paraboloid(v) * fadeBottom(v) * fadeBottom(v) * fadeTop(v) * fadeTop(v);
+        var fadeBottomV = fadeBottom(v);
+        var fadeTopV = fadeTop(v);
+
+        return paraboloid(v) * fadeBottomV * fadeBottomV * fadeTopV * fadeTopV;
       };
     }
 
@@ -212,7 +215,7 @@ namespace TomasKalva
           displNoise(v + Vector3d.UnitX * 10 + offset) ,
           displNoise(v * 3 + Vector3d.UnitX * 20 + offset)
           );
-        var intensity = textureNoise(scaledV + offset + displ) * shape(v + 0.2 * displ) * ( v.Y < 0.1 ? 0 : 1);
+        var intensity = textureNoise(scaledV + offset + displ) * shape(v + 0.2 * displ) /** ( v.Y < 0.1 ? 0 : 1)*/;
 
         return 200 * intensityMult * intensity * color(intensity);
       };

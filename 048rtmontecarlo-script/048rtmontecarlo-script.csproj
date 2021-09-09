@@ -264,15 +264,21 @@
     <Compile Include="..\common\WorkloadDistribution.cs">
       <Link>WorkloadDistribution.cs</Link>
     </Compile>
-    <None Include="..\data\rtscenes\VolumeObjectScene.cs">
-      <Link>VolumeObjectScene.cs</Link>
-    </None>
     <None Include="..\data\rtscenes\AnimatedScene.cs">
       <Link>AnimatedScene.cs</Link>
+    </None>
+    <None Include="..\data\rtscenes\Fire.cs">
+      <Link>Fire.cs</Link>
     </None>
     <Compile Include="..\newmodules\TomasKalva-VolumeRayCasting\Noise.cs">
       <Link>Noise.cs</Link>
     </Compile>
+    <None Include="..\newmodules\TomasKalva-VolumeRayCasting\scenes\VolumeCubeLarge.cs">
+      <Link>VolumeCubeLarge.cs</Link>
+    </None>
+    <None Include="..\newmodules\TomasKalva-VolumeRayCasting\scenes\VolumeCubeSmall.cs">
+      <Link>VolumeCubeSmall.cs</Link>
+    </None>
     <Compile Include="..\newmodules\TomasKalva-VolumeRayCasting\VolumeCube.cs">
       <Link>VolumeCube.cs</Link>
     </Compile>
